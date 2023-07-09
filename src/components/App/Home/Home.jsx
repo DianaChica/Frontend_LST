@@ -2,50 +2,105 @@ import React, { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   recCodeToTemp,
-  formatTemperature,
   realtimeDbHandlers,
   getUserData,
 } from "../../../utils/homeUtils";
-import useGetTemperatureCode from "../../../utils/useGetTemperatureCode";
 import useGetRecomendation from "../../../utils/useGetRecomendation";
-import { AuthContext } from "../../Stack";
 import { BsThermometerSnow } from "react-icons/bs";
 import { IoHappyOutline } from "react-icons/io5";
 import { WiHot } from "react-icons/wi";
-import Timer from "./Timer";
 import ProfileCard from "./ProfileCard";
 import AdminPanel from "./AdminPanel";
 import useSetTitle from "../../../utils/useSetTitle";
 import mqttService from "../../../utils/mqttUtils";
+import Swal from 'sweetalert2';
 
 function Home() {
   useSetTitle("Home");
 
-  //Para ver usuario logueado. Button id=Borrar
-  const [currentUser, authState] = useContext(AuthContext);
   const [userRole, setUserRole] = useState(null);
   const [userName, setUserName] = useState(null);
+  const [temperature, setTemperature] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [lastVoteTime, setLastVoteTime] = useState(null);
 
-  async function resolveData() {
-    const [role, username] = await getUserData(currentUser.uid);
-    setUserRole(role);
-    setUserName(username);
-  }
+  useEffect(() => {
+    const timer = setInterval(() => {
+      fetchTemperature();
+    }, 5000); // Actualiza la temperatura cada 5 segundos
+  
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
 
-  resolveData();
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+  
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
+  
+  const fetchTemperature = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/v1/ac/temp');
+      if (response.ok) {
+        const data = await response.json();
+        setTemperature(data.Message);
+        setLoading(false);
+        console.log('Temperatura:', data.Message);
+      } else {
+        console.log('Error fetching temperature. Status:', response.status);
+        const responseBody = await response.text();
+        console.log('Response body:', responseBody);
 
-  const [setRec, incrementUserComfortState] = realtimeDbHandlers();
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  
+  const [setRec,] = realtimeDbHandlers();
   const { publish, topic } = mqttService;
   const done = useGetRecomendation(setRec);
-  const temperature = useGetTemperatureCode(0, setRec);
-  const displayTemperature = formatTemperature(recCodeToTemp(temperature));
 
-  /*
-  Ideas o cosas necesarias para mejorar el UI/UX
-  -Poner un timer que avise cuanto falta para el siguiente cambio de estado
-  -Mejorar el feedback cuando se presiona un boton de comfort
-  -Hacer que lo botones se blooquen cuando vote cualquier instancia del usuario estudiante. Desbloquear cuando llegue la recomendación. Es decir cada 15 minutos.
-  */
+
+  
+  const registerVote = async (nivel) => {
+    try {
+      const response = await fetch('http://localhost:8080/api/v1/votacionComfortRL/votacionComfort', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ nivel })
+      });
+
+      if (response.ok) {
+        Swal.fire(
+          '¡Gracias!',
+          'Tu voto fue registrado',
+          'success'
+        )
+        setLastVoteTime(new Date());
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Oops...',
+          text: 'Hubo un error al registrar tu voto',
+        })     }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+// Calcula si han pasado menos de un minuto desde la última votación
+  const oneMinuteAgo = new Date(new Date().getTime() - 60000);
+  const lessThanAMinuteAgo = lastVoteTime && lastVoteTime > oneMinuteAgo;
 
   return (
     // Contenedor completo
@@ -61,7 +116,7 @@ function Home() {
           <div className="flex flex-col justify-center items-center mt-4">
             <h1>Temperatura del aire:</h1>
             <h1 className="font-semibold text-xl">
-              {displayTemperature ? displayTemperature : "Cargando..."}
+            {loading ? "Cargando..." : ` ${temperature}°C`}
             </h1>
           </div>
           {userRole === "admin" ? (
@@ -88,9 +143,9 @@ function Home() {
               <button
                 className="w-full rounded bg-emerald-400 h-[28px]"
                 onClick={() => {
-                  incrementUserComfortState(0);
-                  alert("Se registro su voto correctamente");
+                  registerVote("frio");
                 }}
+                disabled={lessThanAMinuteAgo}  // Deshabilita el botón si han pasado menos de un minuto
               >
                 Frio
               </button>
@@ -102,9 +157,9 @@ function Home() {
               <button
                 className="w-full rounded bg-emerald-400 h-[28px]"
                 onClick={() => {
-                  incrementUserComfortState(1);
-                  alert("Se registro su voto correctamente");
+                  registerVote("neutral");
                 }}
+                disabled={lessThanAMinuteAgo}  // Deshabilita el botón si han pasado menos de un minuto
               >
                 Neutral
               </button>
@@ -116,34 +171,41 @@ function Home() {
               <button
                 className="w-full rounded bg-emerald-400 h-[28px]"
                 onClick={() => {
-                  incrementUserComfortState(2);
-                  alert("Se registro su voto correctamente");
+                  registerVote("calor");
                 }}
+                disabled={lessThanAMinuteAgo}  // Deshabilita el botón si han pasado menos de un minuto
               >
                 Calor
               </button>
             </div>
           </div>
-          {/* <Timer />{" "} */}
+          <h1 className="mt-5 text-gray-50">
+          {currentTime.toLocaleDateString()} {currentTime.toLocaleTimeString()}
+          </h1>
         </div>
-        {/* <div>
-          <button
-            className="bg-red-500"
-            onClick={() => {
-              console.log(currentUser);
-            }}
-          >
-            show
-          </button>
-        </div> */}
       </div>
-
-      {/*---------------------------- Profile segment ----------------------------*/}
-      <div className="md:w-1/3 md:border-opacity-0 border-t-2 border-t-gray-400 flex flex-col justify-center items-center">
-        <ProfileCard role={userRole} username={userName} />
-      </div>
-    </div>
-  );
+{/*---------------------------- Profile segment ----------------------------*/}
+<div className="md:w-1/3 md:border-opacity-0 border-t-2 border-t-gray-400 flex flex-col justify-center items-center">
+  <ProfileCard role={userRole} username={userName} />
+</div>
+</div>
+);
 }
 
 export default Home;
+
+
+
+
+
+
+
+
+
+
+  /*
+  Ideas o cosas necesarias para mejorar el UI/UX
+  -Poner un timer que avise cuanto falta para el siguiente cambio de estado
+  -Mejorar el feedback cuando se presiona un boton de comfort
+  -Hacer que lo botones se blooquen cuando vote cualquier instancia del usuario estudiante. Desbloquear cuando llegue la recomendación. Es decir cada 15 minutos.
+  */

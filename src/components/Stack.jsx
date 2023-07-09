@@ -2,7 +2,7 @@ import React, { createContext } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import NavBar from "./App/NavBar";
 import Home from "./App/Home/Home";
-import Reports from "./App/Reports";
+// import Reports from "./App/Reports";
 import About from "./App/About";
 
 export const AuthContext = createContext();
@@ -15,7 +15,7 @@ function Stack({ currentUser, authState }) {
           <NavBar />
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/reports" element={<Reports />} />
+            {/* <Route path="/reports" element={<Reports />} /> */}
             <Route path="/about" element={<About />} />
           </Routes>
         </div>

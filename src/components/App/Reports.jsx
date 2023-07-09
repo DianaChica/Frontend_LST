@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+/* import React, { useEffect, useState } from "react";
 import { fsdb } from "../../config/firebase";
 import {
   collection,
@@ -9,7 +9,7 @@ import {
 } from "firebase/firestore";
 import VotesChart from "./VotesChart";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
-import "./reports.css";
+import "./css";
 import useSetTitle from "../../utils/useSetTitle";
 
 function Reports() {
@@ -63,3 +63,4 @@ function Reports() {
 }
 
 export default Reports;
+ */

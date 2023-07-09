@@ -20,7 +20,7 @@ function NavBar() {
           <Link to={"/"}>Home</Link>
         </li>
         <li>
-          <Link to={"/reports"}>Reports</Link>
+          {/* <Link to={"/reports"}>Reports</Link> */}
         </li>
       </ul>
 
@@ -60,9 +60,9 @@ function NavBar() {
           </Link>
         </li>
         <li className="text-5xl py-6">
-          <Link to={"/reports"} onClick={menuClickHandler}>
+          {/* <Link to={"/reports"} onClick={menuClickHandler}>
             Reports
-          </Link>
+          </Link> */}
         </li>
       </ul>
     </nav>
