@@ -47,7 +47,7 @@ function Home() {
   
   const fetchTemperature = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/v1/ac/temp');
+      const response = await fetch('http://200.126.13.206:5000/api/v1/ac/temp');
       if (response.ok) {
         const data = await response.json();
         setTemperature(data.Message);
