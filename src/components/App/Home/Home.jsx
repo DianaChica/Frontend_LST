@@ -73,7 +73,7 @@ function Home() {
   
   const registerVote = async (nivel) => {
     try {
-      const response = await fetch('http://localhost:8080/api/v1/votacionComfortRL/votacionComfort', {
+      const response = await fetch('http://200.126.14.234:8080/api/v1/votacionComfortRL/votacionComfort', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
